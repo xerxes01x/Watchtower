@@ -42,3 +42,5 @@ yarn-error.log*
 
 # Local project context (AI memory file, not for version control)
 .watchtower_context.md
+
+.claude

@@ -6,6 +6,68 @@ import { useCallback, useEffect, useRef, useState } from "react";
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const POLL_INTERVAL_MS = 5_000;
 
+/* ── Inline SVG icons (Lucide-style) — no emojis as UI ──────────────────── */
+const RadarIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+    <path d="M19.07 4.93A10 10 0 0 0 6.99 3.34" />
+    <path d="M4 6h.01" />
+    <path d="M2.29 9.62A10 10 0 1 0 21.31 8.35" />
+    <path d="M16.24 7.76A6 6 0 1 0 17.31 14" />
+    <path d="M12 18h.01" />
+    <path d="M17.99 11.66A6 6 0 0 1 15.77 16.67" />
+    <circle cx="12" cy="12" r="2" />
+    <path d="m13.41 10.59 5.66-5.66" />
+  </svg>
+);
+const PlayIcon = () => (
+  <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden>
+    <path d="M8 5v14l11-7z" />
+  </svg>
+);
+const PlusIcon = () => (
+  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+       strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+);
+const TrashIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M3 6h18" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    <path d="M10 11v6M14 11v6" />
+  </svg>
+);
+const CloseIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M18 6 6 18M6 6l12 12" />
+  </svg>
+);
+const CheckCircleIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+    <path d="m9 11 3 3L22 4" />
+  </svg>
+);
+const AlertCircleIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 8v4M12 16h.01" />
+  </svg>
+);
+const SpinnerIcon = () => (
+  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+       strokeWidth="2.5" strokeLinecap="round" aria-hidden
+       style={{ animation: "spin 0.9s linear infinite" }}>
+    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+  </svg>
+);
+
 type Monitor = {
   id: string;
   name: string;
@@ -183,7 +245,7 @@ export default function Dashboard() {
     return (
       <div className="auth-screen">
         <div className="auth-card">
-          <span className="auth-logo">🔭</span>
+          <span className="auth-logo"><RadarIcon /></span>
           <h1>Watchtower</h1>
           <p className="auth-subtitle">API Monitor Dashboard</p>
           <button className="btn btn-github" onClick={() => signIn("github")}>
@@ -207,18 +269,18 @@ export default function Dashboard() {
   return (
     <>
       <header>
-        <span style={{ fontSize: "1.4rem" }}>🔭</span>
+        <span className="brand-mark"><RadarIcon /></span>
         <h1>Watchtower</h1>
-        <span className="subtitle">API Monitor Dashboard</span>
-        <span className="refresh-info">auto-refresh every 5s</span>
-        <button className="btn btn-new" onClick={() => setShowModal(true)}>
-          + New Monitor
+        <span className="subtitle">Observability Dashboard</span>
+        <span className="refresh-info mono">auto-refresh · 5s</span>
+        <button className="btn-new" onClick={() => setShowModal(true)}>
+          <PlusIcon /> New Monitor
         </button>
         <div className="user-info">
-          {session.user.image && (
+          {session?.user?.image && (
             <img src={session.user.image} alt="" className="user-avatar" />
           )}
-          <span className="user-name">{session.user.name ?? session.user.email}</span>
+          <span className="user-name">{session?.user?.name ?? session?.user?.email}</span>
           <button className="btn-signout" onClick={() => signOut()}>Sign out</button>
         </div>
       </header>
@@ -227,18 +289,16 @@ export default function Dashboard() {
         {!loading && !fetchError && (
           <div className="summary-bar">
             <div className="summary-stat">
+              <span className="summary-label">Total Monitors</span>
               <span className="summary-val">{total}</span>
-              <span className="summary-label">Total</span>
             </div>
-            <div className="summary-divider" />
-            <div className="summary-stat">
+            <div className="summary-stat summary-stat--up">
+              <span className="summary-label">Operational</span>
               <span className="summary-val summary-up">{upCount}</span>
-              <span className="summary-label">UP</span>
             </div>
-            <div className="summary-divider" />
-            <div className="summary-stat">
+            <div className="summary-stat summary-stat--down">
+              <span className="summary-label">Incidents</span>
               <span className="summary-val summary-down">{downCount}</span>
-              <span className="summary-label">DOWN</span>
             </div>
           </div>
         )}
@@ -270,11 +330,13 @@ export default function Dashboard() {
               ? `${Math.round(m.last_latency_ms)}ms`
               : null;
 
+            const isLive = m.schedule_seconds != null;
             return (
-              <div key={m.id} className={`card card-${state}`}>
+              <div key={m.id} className={`card card-${state}${isLive ? " is-live" : ""}`}>
                 <div className="card-header">
                   <span className={`dot dot-${state}`} />
                   <span className="card-name" title={m.name}>{m.name}</span>
+                  {isLive && <span className="live-tag">Live</span>}
                   <span className={`badge badge-${state}`}>{m.current_state}</span>
                   <button
                     className="btn-delete"
@@ -283,24 +345,28 @@ export default function Dashboard() {
                     onClick={() => deleteMonitor(m.id, m.name)}
                     aria-label="Delete monitor"
                   >
-                    {isDeleting ? "…" : "🗑"}
+                    {isDeleting ? <SpinnerIcon /> : <TrashIcon />}
                   </button>
                 </div>
 
                 <div className="card-url" title={m.url}>
-                  <span className="method-tag">{m.method}</span> {m.url}
+                  <span className="method-tag">{m.method}</span>
+                  <span className="card-url-text">{m.url}</span>
                 </div>
 
                 <div className="card-meta">
-                  <span>Last run: {lastRun}</span>
-                  {m.schedule_seconds != null && <span>Every {m.schedule_seconds}s</span>}
+                  <span>Last run: <span className="mono">{lastRun}</span></span>
+                  {m.schedule_seconds != null && (
+                    <span>Every <span className="mono">{m.schedule_seconds}s</span></span>
+                  )}
                 </div>
 
                 {latency && (
                   <div className={`card-latency card-latency-${state}`}>
-                    Latency: <strong>{latency}</strong>
+                    <span>Latency</span>
+                    <span className="latency-value">{latency}</span>
                     {m.latency_ms_threshold != null && (
-                      <span className="sla-label"> / SLA {m.latency_ms_threshold}ms</span>
+                      <span className="sla-label">SLA {m.latency_ms_threshold}ms</span>
                     )}
                   </div>
                 )}
@@ -310,7 +376,7 @@ export default function Dashboard() {
                   disabled={isRunning}
                   onClick={() => runNow(m.id, m.name)}
                 >
-                  {isRunning ? "Running…" : "▶ Run Check"}
+                  {isRunning ? <><SpinnerIcon /> Running…</> : <><PlayIcon /> Run Check</>}
                 </button>
               </div>
             );
@@ -323,7 +389,9 @@ export default function Dashboard() {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>New Monitor</h2>
-              <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
+              <button className="modal-close" onClick={() => setShowModal(false)} aria-label="Close">
+                <CloseIcon />
+              </button>
             </div>
             <form onSubmit={createMonitor} className="modal-form">
               <label>
@@ -397,7 +465,7 @@ export default function Dashboard() {
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-submit" disabled={submitting}>
-                  {submitting ? "Creating…" : "Create Monitor"}
+                  {submitting ? <><SpinnerIcon /> Creating…</> : "Create Monitor"}
                 </button>
               </div>
             </form>
@@ -407,15 +475,14 @@ export default function Dashboard() {
 
       <div className="toast-stack">
         {toasts.map((t) => (
-          <div
-            key={t.id}
-            className="toast"
-            style={{ borderColor: t.ok ? "#22c55e66" : "#ef444466" }}
-          >
-            {t.ok ? "✅" : "❌"} {t.message}
+          <div key={t.id} className={`toast ${t.ok ? "toast--ok" : "toast--err"}`}>
+            {t.ok ? <CheckCircleIcon /> : <AlertCircleIcon />}
+            <span>{t.message}</span>
           </div>
         ))}
       </div>
+
+      <style jsx global>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </>
   );
 }
