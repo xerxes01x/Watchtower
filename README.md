@@ -45,7 +45,7 @@ All currently installed project dependencies are listed in `requirements.txt` an
 
 1. You create a monitor via FastAPI (`POST /monitors`).
 2. Scheduler/executor pushes a run payload to Celery.
-3. Celery worker performs the real API request.
+3. Celery worker performs the real API request so use it carefully.
 4. Validation engine runs:
 	- expected HTTP status check
 	- JSON schema check (if provided)
