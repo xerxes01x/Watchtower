@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.api.schemas import CheckResult, Monitor, MonitorCreate, MonitorList, ResultList, RunRequest
-from app.core.auth import CurrentUser, get_current_user, require_auth
+from app.core.auth import CurrentUser, get_current_user
 from app.core.limiter import limiter
 from app.scheduler.scheduler import run_monitor
 from app.services.storage import STORE
@@ -62,6 +62,11 @@ async def run_monitor_now(
     return run_monitor(monitor, reason=(payload.reason if payload else None))
 
 
-@router.get("/results", response_model=ResultList, dependencies=[Depends(require_auth)])
-async def list_results(monitor_id: UUID | None = None) -> ResultList:
-    return ResultList(results=STORE.list_results(monitor_id))
+@router.get("/results", response_model=ResultList)
+@limiter.limit("60/minute")
+async def list_results(
+    request: Request,
+    monitor_id: UUID | None = None,
+    current_user: CurrentUser = Depends(get_current_user),
+) -> ResultList:
+    return ResultList(results=STORE.list_results(current_user.id, monitor_id))

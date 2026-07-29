@@ -7,6 +7,10 @@ from httpx import ASGITransport, AsyncClient
 os.environ["CELERY_ALWAYS_EAGER"] = "true"
 os.environ["DATABASE_URL"] = "sqlite+pysqlite:///:memory:"
 os.environ["AUTO_CREATE_DB"] = "true"
+# Force auth off so the suite is hermetic regardless of a local .env that may
+# set NEXTAUTH_SECRET (env vars outrank the .env file in pydantic-settings).
+# With no secret, get_current_user is a no-op keyed on client IP.
+os.environ["NEXTAUTH_SECRET"] = ""
 
 from app.api.schemas import CheckResult
 from app.db.session import init_db
@@ -48,5 +52,7 @@ async def test_create_and_run_monitor(monkeypatch):
         run_response = await client.post(f"/monitors/{monitor_id}/run")
         assert run_response.status_code == 200
 
-    results = STORE.list_results(monitor_id)
-    assert len(results) == 1
+        # Results are user-scoped; fetch them via the API for this tenant.
+        results_response = await client.get(f"/results?monitor_id={monitor_id}")
+        assert results_response.status_code == 200
+        assert len(results_response.json()["results"]) == 1

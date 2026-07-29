@@ -115,9 +115,19 @@ class DatabaseStore:
             session.add(model)
             session.commit()
 
-    def list_results(self, monitor_id: UUID | None = None) -> list[CheckResult]:
+    def list_results(
+        self, user_id: str, monitor_id: UUID | None = None
+    ) -> list[CheckResult]:
+        """Return results only for monitors owned by user_id (per-tenant isolation)."""
         with SessionLocal() as session:
-            stmt = select(CheckResultModel)
+            stmt = (
+                select(CheckResultModel)
+                .join(
+                    MonitorModel,
+                    CheckResultModel.monitor_id == MonitorModel.id,
+                )
+                .where(MonitorModel.user_id == user_id)
+            )
             if monitor_id is not None:
                 stmt = stmt.where(CheckResultModel.monitor_id == str(monitor_id))
             items = session.scalars(stmt).all()
