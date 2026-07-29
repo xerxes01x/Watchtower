@@ -64,10 +64,18 @@ def get_current_user(
     Also stamps request.state.user_id so the slowapi key function can read
     it without re-decoding the JWT.
 
-    When NEXTAUTH_SECRET is not configured (local dev / CI) the dependency
-    is a no-op and returns a synthetic dev user keyed on client IP.
+    When NEXTAUTH_SECRET is not configured in a non-production environment
+    (local dev / CI) the dependency is a no-op and returns a synthetic dev user
+    keyed on client IP. In production a missing secret fails closed — the
+    application also refuses to start (see app.main._validate_production_config),
+    so this branch is defence-in-depth.
     """
     if not settings.nextauth_secret:
+        if settings.is_production:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Authentication is not configured",
+            )
         ip = request.client.host if request.client else "dev"
         request.state.user_id = ip
         return CurrentUser(id=ip)

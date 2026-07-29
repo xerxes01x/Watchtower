@@ -4,16 +4,16 @@ services:
       context: .
       dockerfile: infra/docker/app.Dockerfile
     environment:
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:6379/2
-      - DATABASE_URL=postgresql+psycopg2://watchtower:watchtower@db:5432/watchtower
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/1}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND:-redis://redis:6379/2}
+      - DATABASE_URL=${DATABASE_URL:-postgresql+psycopg2://watchtower:watchtower@db:5432/watchtower}
       - AUTO_CREATE_DB=false
       - PROMETHEUS_METRICS_PATH=/metrics
       - LOG_LEVEL=INFO
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-      - CORS_ORIGINS=http://localhost:3001
-      - RATE_LIMIT_REDIS_URL=redis://redis:6379/3
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3001}
+      - RATE_LIMIT_REDIS_URL=${RATE_LIMIT_REDIS_URL:-redis://redis:6379/3}
     ports:
       - "8000:8000"
     depends_on:
@@ -27,10 +27,10 @@ services:
       dockerfile: infra/docker/worker.Dockerfile
     command: ["celery", "-A", "worker.celery_app", "worker", "--pool=threads", "--loglevel=INFO"]
     environment:
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:6379/2
-      - DATABASE_URL=postgresql+psycopg2://watchtower:watchtower@db:5432/watchtower
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/1}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND:-redis://redis:6379/2}
+      - DATABASE_URL=${DATABASE_URL:-postgresql+psycopg2://watchtower:watchtower@db:5432/watchtower}
       - AUTO_CREATE_DB=false
       - LOG_LEVEL=INFO
     depends_on:
@@ -44,10 +44,10 @@ services:
       dockerfile: infra/docker/worker.Dockerfile
     command: ["celery", "-A", "worker.celery_app", "beat", "--loglevel=INFO"]
     environment:
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:6379/2
-      - DATABASE_URL=postgresql+psycopg2://watchtower:watchtower@db:5432/watchtower
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/1}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND:-redis://redis:6379/2}
+      - DATABASE_URL=${DATABASE_URL:-postgresql+psycopg2://watchtower:watchtower@db:5432/watchtower}
       - AUTO_CREATE_DB=false
       - LOG_LEVEL=INFO
     depends_on:
@@ -64,9 +64,9 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      - POSTGRES_DB=watchtower
-      - POSTGRES_USER=watchtower
-      - POSTGRES_PASSWORD=watchtower
+      - POSTGRES_DB=${POSTGRES_DB:-watchtower}
+      - POSTGRES_USER=${POSTGRES_USER:-watchtower}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-watchtower}
     ports:
       - "5432:5432"
     volumes:
@@ -80,11 +80,11 @@ services:
     ports:
       - "3001:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
       - GITHUB_ID=${GITHUB_ID}
       - GITHUB_SECRET=${GITHUB_SECRET}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-      - NEXTAUTH_URL=http://localhost:3001
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3001}
     depends_on:
       - app
     restart: unless-stopped

@@ -9,9 +9,10 @@ from app.core.config import settings
 
 @celeryd_init.connect
 def init_worker(**kwargs):
-    # Start a Prometheus metrics server on a detached thread on port 8001
-    # This allows Prometheus to scrape the worker's metrics directly
-    start_http_server(8001)
+    # Start a Prometheus metrics server on a detached thread so Prometheus can
+    # scrape the worker directly. Port is configurable via WORKER_METRICS_PORT
+    # (default 8001); keep it in sync with the worker target in prometheus.yml.
+    start_http_server(settings.worker_metrics_port)
 
 celery_app = Celery(
     "watchtower",

@@ -16,8 +16,32 @@ from app.core.logging import configure_logging
 from app.db.session import init_db
 
 
+def _validate_production_config() -> None:
+    """Fail fast if the app is booted in production with insecure/absent config.
+
+    Keeps production fail-closed: a blank NEXTAUTH_SECRET would otherwise drop
+    the auth dependency into IP-keyed no-auth dev mode. Default DB credentials
+    are also rejected so the bundled Postgres password can't ship to prod.
+    """
+    if not settings.is_production:
+        return
+
+    problems: list[str] = []
+    if not settings.nextauth_secret:
+        problems.append("NEXTAUTH_SECRET is required in production (auth would fail open)")
+    if "watchtower:watchtower@" in settings.database_url:
+        problems.append("DATABASE_URL uses the default 'watchtower:watchtower' credentials")
+
+    if problems:
+        raise RuntimeError(
+            "Refusing to start in production with insecure configuration:\n  - "
+            + "\n  - ".join(problems)
+        )
+
+
 def create_app() -> FastAPI:
     configure_logging()
+    _validate_production_config()
 
     @asynccontextmanager
     async def lifespan(_: FastAPI):

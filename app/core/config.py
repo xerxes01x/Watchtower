@@ -6,8 +6,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     app_name: str = "Watchtower"
-    environment: str = "development"
+    environment: str = Field(default="development", alias="ENVIRONMENT")
     log_level: str = "INFO"
+
+    # Server binding (used by the `python main.py` entrypoint)
+    api_host: str = Field(default="0.0.0.0", alias="API_HOST")
+    api_port: int = Field(default=8000, alias="API_PORT")
+    # Port the Celery worker exposes Prometheus metrics on (scraped as worker:8001)
+    worker_metrics_port: int = Field(default=8001, alias="WORKER_METRICS_PORT")
 
     api_auth_token: str | None = Field(default=None, alias="API_AUTH_TOKEN")
     jwt_secret: str | None = Field(default=None, alias="JWT_SECRET")
@@ -45,6 +51,10 @@ class Settings(BaseSettings):
     auto_create_db: bool = Field(default=False, alias="AUTO_CREATE_DB")
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    @property
+    def is_production(self) -> bool:
+        return self.environment.strip().lower() in {"production", "prod"}
 
 
 settings = Settings()
