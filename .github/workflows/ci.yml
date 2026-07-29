@@ -23,5 +23,6 @@ jobs:
           DATABASE_URL: "sqlite+pysqlite:///./test.db"
           AUTO_CREATE_DB: "true"
           PYTHONPATH: "."
+          RATE_LIMIT_REDIS_URL: "memory://"
         run: |
           pytest -q
