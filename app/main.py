@@ -13,35 +13,16 @@ from app.api.routes import router
 from app.core.config import settings
 from app.core.limiter import limiter
 from app.core.logging import configure_logging
+from app.core.startup import validate_production_config
 from app.db.session import init_db
-
-
-def _validate_production_config() -> None:
-    """Fail fast if the app is booted in production with insecure/absent config.
-
-    Keeps production fail-closed: a blank NEXTAUTH_SECRET would otherwise drop
-    the auth dependency into IP-keyed no-auth dev mode. Default DB credentials
-    are also rejected so the bundled Postgres password can't ship to prod.
-    """
-    if not settings.is_production:
-        return
-
-    problems: list[str] = []
-    if not settings.nextauth_secret:
-        problems.append("NEXTAUTH_SECRET is required in production (auth would fail open)")
-    if "watchtower:watchtower@" in settings.database_url:
-        problems.append("DATABASE_URL uses the default 'watchtower:watchtower' credentials")
-
-    if problems:
-        raise RuntimeError(
-            "Refusing to start in production with insecure configuration:\n  - "
-            + "\n  - ".join(problems)
-        )
 
 
 def create_app() -> FastAPI:
     configure_logging()
-    _validate_production_config()
+    # Same fail-closed guard as the container entrypoint, so it also fires when
+    # the app is launched directly (e.g. `uvicorn app.main:app`). Now lives in
+    # app.core.startup as the single source of truth.
+    validate_production_config()
 
     @asynccontextmanager
     async def lifespan(_: FastAPI):

@@ -15,4 +15,6 @@ ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Entrypoint runs the startup sequence (validate config -> wait for DB ->
+# migrate) and only then launches Uvicorn. Fails the container on any error.
+CMD ["python", "bootstrap.py"]
